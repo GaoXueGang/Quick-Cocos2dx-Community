@@ -273,6 +273,29 @@ function Node:setBaseNodeEventListener()
     self:registerScriptHandler(self._baseNodeEventListener_)
 end
 
+function Node:addNodeEventListenerEx(hal, beginScale, endedScale)
+    self:setTouchEnabled(true)
+    self:addNodeEventListener(cc.NODE_TOUCH_EVENT, function(event)
+        if event.name == "began" then
+            self:setScale(beginScale or 0.95)
+            self.hasMoving = false
+        elseif "moved" == event.name then
+            local distance = math.abs(event.x - event.prevX)
+            if distance > 10 then
+                self.hasMoving = true
+            end
+        elseif event.name == "ended" then
+            self:setScale(endedScale or 1.0)
+            if not self.hasMoving then
+                if hal ~= nil then
+                    hal(event, self)
+                end
+            end
+        end
+        return true
+    end)
+end
+
 function Node:addNodeEventListener( evt, hdl, tag, priority )
     if not flagNodeTouchInCocos then
         return tolua.getcfunction(self, "addNodeEventListener")(self, evt, hdl, tag, priority)
